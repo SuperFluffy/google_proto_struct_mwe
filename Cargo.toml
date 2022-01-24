@@ -1,0 +1,17 @@
+[package]
+name = "mwe"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.56"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bytes = "1.1.0"
+prost = "0.9.0"
+
+tonic = { version = "0.6.0", optional = true }
+
+[build-dependencies]
+prost-build = "0.9.0"
+tonic-build = "0.6.0"

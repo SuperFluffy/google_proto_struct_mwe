@@ -1,0 +1,93 @@
+name: Continuous integration
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings -W unreachable-pub -W rust-2021-compatibility"
+    strategy:
+      matrix:
+        provider: [no_provider, hipcamp]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.PRM_DEPLOYER_GITHUB_ACTIONS }}
+          submodules: recursive
+      - name: Setup SSH Keys and known_hosts
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - run: rustup install 1.58.1 && rustup default stable
+      - run: rustup component add rustfmt
+      - name: Cargo test
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: cargo test --features "${{ matrix.provider }} test"
+
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - run: rustup update nightly && rustup default nightly
+      - run: rustup component add rustfmt && cargo fmt --version
+      - run: cargo fmt --all -- --check
+
+  clippy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        provider: [no_provider, hipcamp]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.PRM_DEPLOYER_GITHUB_ACTIONS }}
+          submodules: recursive
+      - uses: webfactory/ssh-agent@v0.5.4
+        with:
+            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - run: rustup install 1.58.1 && rustup default stable
+      - run: rustup component add rustfmt
+      - run: rustup component add clippy && cargo clippy --version
+      - run: |
+          cargo clippy --features "${{ matrix.provider }}" -- \
+            -D warnings \
+            -W clippy::all \
+            -W clippy::pedantic \
+            -A clippy::missing_errors_doc \
+            -A clippy::module_name_repetitions
