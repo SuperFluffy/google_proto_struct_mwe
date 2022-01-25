@@ -20,7 +20,7 @@ jobs:
             ~/.cargo/git
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - run: rustup install 1.58.1 && rustup default stable
+      - run: rustup install 1.56.0 && rustup default stable
       - run: rustup component add rustfmt
       - name: Cargo test
         run: cargo test
