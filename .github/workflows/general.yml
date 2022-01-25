@@ -22,8 +22,8 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - run: |
-          rustup install 1.56.0
-          rustup default 1.56.0
+          rustup install 1.57.0
+          rustup default 1.57.0
           rustc --version --verbose
       - run: rustup component add rustfmt
       - name: Cargo test
