@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: "-D warnings -W unreachable-pub -W rust-2021-compatibility"
+      RUST_BACKTRACE: 1
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
